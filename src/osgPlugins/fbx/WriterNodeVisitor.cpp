@@ -17,6 +17,7 @@
 #include <osg/CullFace>
 #include <osg/MatrixTransform>
 #include <osg/NodeVisitor>
+#include <osg/PositionAttitudeTransform>
 #include <osg/PrimitiveSet>
 #include <osgDB/FileUtils>
 #include <osgDB/WriteFile>
@@ -41,6 +42,7 @@ public:
         _listTriangles(listTriangles),
         _modeCache(0),
         _hasNormalCoords(geo->getNormalArray() != NULL),
+		_hasVertexColors(geo->getColorArray() != NULL),
         _hasTexCoords(geo->getTexCoordArray(0) != NULL),
         _geo(geo),
         _lastFaceIndex(0),
@@ -210,7 +212,7 @@ private:
     ListTriangle&        _listTriangles;
     GLenum               _modeCache;
     std::vector<GLuint>  _indexCache;
-    bool                 _hasNormalCoords, _hasTexCoords;
+    bool                 _hasNormalCoords, _hasVertexColors, _hasTexCoords;
     const osg::Geometry* _geo;
     unsigned int         _lastFaceIndex;
     int                  _material;
@@ -446,6 +448,7 @@ WriterNodeVisitor::setLayerTextureAndMaterial(FbxMesh* mesh)
 void
 WriterNodeVisitor::setControlPointAndNormalsAndUV(const GeometryList& geometryList,
                                                   MapIndices&       index_vert,
+	                                              bool              vertexcolors,
                                                   bool              texcoords,
                                                   FbxMesh*         mesh)
 {
@@ -457,6 +460,15 @@ WriterNodeVisitor::setControlPointAndNormalsAndUV(const GeometryList& geometryLi
     lLayerElementNormal->GetDirectArray().SetCount(index_vert.size());
     mesh->GetLayer(0)->SetNormals(lLayerElementNormal);
     FbxLayerElementUV* lUVDiffuseLayer = FbxLayerElementUV::Create(mesh, "DiffuseUV");
+	FbxLayerElementVertexColor* lLayerElementVertexColor = FbxLayerElementVertexColor::Create(mesh, "");
+
+	if (vertexcolors)
+	{
+		lLayerElementVertexColor->SetMappingMode(FbxLayerElement::eByControlPoint);
+		lLayerElementVertexColor->SetReferenceMode(FbxLayerElement::eDirect);
+		lLayerElementVertexColor->GetDirectArray().SetCount(index_vert.size());
+		mesh->GetLayer(0)->SetVertexColors(lLayerElementVertexColor);
+	}
 
     if (texcoords)
     {
@@ -532,6 +544,34 @@ WriterNodeVisitor::setControlPointAndNormalsAndUV(const GeometryList& geometryLi
             lLayerElementNormal->GetDirectArray().SetAt(it->second, normal);
         }
 
+		if (vertexcolors)
+		{
+			const osg::Array * basevertexcolors = pGeometry->getColorArray();
+			if (basevertexcolors && basevertexcolors->getNumElements() > 0)
+			{
+				FbxColor vertexcolor;
+				if (basevertexcolors->getType() == osg::Array::Vec4ArrayType)
+				{
+					const osg::Vec4 & vec = (*static_cast<const osg::Vec4Array *>(basevertexcolors))[vertexIndex];
+					vertexcolor.Set(vec.r(), vec.g(), vec.b(), vec.a());
+				}
+				else if (basevertexcolors->getType() == osg::Array::Vec4dArrayType)
+				{
+					const osg::Vec4d & vec = (*static_cast<const osg::Vec4dArray *>(basevertexcolors))[vertexIndex];
+					vertexcolor.Set(vec.r(), vec.g(), vec.b(), vec.a());
+				}
+				else
+				{
+					OSG_NOTIFY(osg::FATAL) << "Vertex Color array is not Vec4 or Vec4d. Not implemented" << std::endl;
+					throw "Vertex Color array is not Vec4 or Vec4d. Not implemented";
+					//_succeeded = false;
+					//return;
+				}
+
+				lLayerElementVertexColor->GetDirectArray().SetAt(it->second, vertexcolor);
+			}
+		}
+
         if (texcoords)
         {
             const osg::Array * basetexcoords = pGeometry->getTexCoordArray(0);
@@ -565,6 +605,7 @@ WriterNodeVisitor::setControlPointAndNormalsAndUV(const GeometryList& geometryLi
 void WriterNodeVisitor::buildFaces(const std::string& name,
                                    const GeometryList& geometryList,
                                    ListTriangle&     listTriangles,
+	                               bool              vertexcolors,
                                    bool              texcoords)
 {
     MapIndices index_vert;
@@ -597,11 +638,12 @@ void WriterNodeVisitor::buildFaces(const std::string& name,
         addPolygon(mesh, index_vert, it->first, it->second);
         mesh->EndPolygon();
     }
-    setControlPointAndNormalsAndUV(geometryList, index_vert, texcoords, mesh);
+    setControlPointAndNormalsAndUV(geometryList, index_vert, vertexcolors, texcoords, mesh);
 }
 
 void WriterNodeVisitor::createListTriangle(const osg::Geometry* geo,
                                            ListTriangle&        listTriangles,
+	                                       bool&                vertexcolors,
                                            bool&                texcoords,
                                            unsigned int&        drawable_n)
 {
@@ -611,6 +653,18 @@ void WriterNodeVisitor::createListTriangle(const osg::Geometry* geo,
         if (vecs)
         {
             nbVertices = vecs->getNumElements();
+
+			// Vertex colors
+			const osg::Array * vcolvec = geo->getColorArray();
+			if (vcolvec)
+			{
+				unsigned int nb = vcolvec->getNumElements();
+				if (nb == nbVertices) vertexcolors = true;
+				else
+				{
+					OSG_WARN << "There are more/less vertex colors than vertices! Ignoring vertex colors.";
+				}
+			}
 
             // Texture coords
             const osg::Array * texvec = geo->getTexCoordArray(0);
@@ -738,6 +792,7 @@ void WriterNodeVisitor::apply(osg::MatrixTransform& node)
 void WriterNodeVisitor::processGeometryList(GeometryList &geometryList, const std::string& meshName)
 {
    ListTriangle listTriangles;
+   bool vertexcolors = false;
    bool texcoords = false;
    for (MaterialMap::iterator it = _materialMap.begin(); it != _materialMap.end(); ++it)
       it->second.setIndex(-1);
@@ -749,14 +804,47 @@ void WriterNodeVisitor::processGeometryList(GeometryList &geometryList, const st
    {
       const osg::Geometry* g = geometryList[i];
 
-      pushStateSet(g->getStateSet());
-      createListTriangle(g, listTriangles, texcoords, i);
-      popStateSet(g->getStateSet());
+      if (g != NULL)
+      {
+         pushStateSet(g->getStateSet());
+         createListTriangle(g, listTriangles, vertexcolors, texcoords, i);
+         popStateSet(g->getStateSet());
+      }
    }
 
    if (listTriangles.size() > 0){
-      buildFaces(meshName, geometryList, listTriangles, texcoords);
+      buildFaces(meshName, geometryList, listTriangles, vertexcolors, texcoords);
    }
+}
+
+void WriterNodeVisitor::apply(osg::PositionAttitudeTransform& node)
+{
+	FbxNode* parent = _curFbxNode;
+	_curFbxNode = FbxNode::Create(_pSdkManager, node.getName().empty() ? "DefaultName" : node.getName().c_str());
+	parent->AddChild(_curFbxNode);
+
+	osg::Vec3d scale = node.getScale();
+	osg::Quat quat = node.getAttitude();
+	osg::Vec3d pos = node.getPosition();
+
+	//const osg::Matrix& matrix = node.getMatrix();
+	//osg::Vec3d pos, scl;
+	//osg::Quat rot, so;
+
+	//matrix.decompose(pos, rot, scl, so);
+	_curFbxNode->LclTranslation.Set(FbxDouble3(pos.x(), pos.y(), pos.z()));
+	_curFbxNode->LclScaling.Set(FbxDouble3(scale.x(), scale.y(), scale.z()));
+
+	FbxAMatrix mat;
+
+	FbxQuaternion q(quat.x(), quat.y(), quat.z(), quat.w());
+	mat.SetQ(q);
+	FbxVector4 vec4 = mat.GetR();
+
+	_curFbxNode->LclRotation.Set(FbxDouble3(vec4[0], vec4[1], vec4[2]));
+
+	traverse(node);
+	_curFbxNode = parent;
 }
 
 // end namespace pluginfbx
