@@ -205,8 +205,7 @@ ReaderWriterFBX::readNode(const std::string& filenameInit,
         std::string ext(osgDB::getLowerCaseFileExtension(filenameInit));
         if (!acceptsExtension(ext)) return ReadResult::FILE_NOT_HANDLED;
 
-        std::string filename(osgDB::findDataFile(filenameInit, options));
-        if (filename.empty()) return ReadResult::FILE_NOT_FOUND;
+		std::string filename = filenameInit;
 
         FbxManager* pSdkManager = FbxManager::Create();
 
