@@ -6,6 +6,7 @@
 #include <osg/Notify>
 #include <osg/MatrixTransform>
 #include <osg/Material>
+#include <osg/PositionAttitudeTransform>
 #include <osg/Texture2D>
 
 #include <osgDB/FileNameUtils>
@@ -398,7 +399,16 @@ osg::Group* createGroupNode(FbxManager& pSdkManager, FbxNode* pNode,
             return pGroup;
         }
 
-        osg::MatrixTransform* pTransform = new osg::MatrixTransform(localMatrix);
+        osg::Vec3 s, t;
+		osg::Quat r, so;
+		localMatrix.decompose(t, r, s, so);
+
+		osg::PositionAttitudeTransform* pTransform = new osg::PositionAttitudeTransform();
+		pTransform->setPosition(t);
+		pTransform->setAttitude(r);
+		pTransform->setScale(s);
+        
+        //osg::MatrixTransform* pTransform = new osg::MatrixTransform(localMatrix);
         pTransform->setName(pNode->GetName());
 
         if (bAnimated)
