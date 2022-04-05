@@ -60,10 +60,16 @@ static Material::Map parseTextureMap( const std::string& ss, Material::Map::Text
         if (s[1] == 's' || s[1] == 'o')
         {
             float x, y, z;
-            if (sscanf(s.c_str(), "%*s %f %f %f%n", &x, &y, &z, &n) != 3)
+			/* if (sscanf(s.c_str(), "%*s %f %f %f%n", &x, &y, &z, &n) != 3)
             {
                 break;
-            }
+            }*/
+
+			std::stringstream stream(s.c_str());
+			stream.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
+
+			if (!(stream >> x >> y >> z)) break;
+			if (stream >> n) break;
 
             if (s[1] == 's')
             {
@@ -77,6 +83,7 @@ static Material::Map parseTextureMap( const std::string& ss, Material::Map::Text
                 map.uOffset = x;
                 map.vOffset = y;
             }
+			
         }
         else if (s.compare(1,2,"mm")==0)
         {
@@ -234,6 +241,8 @@ bool Model::readMTL(std::istream& fin)
 
     while (fin)
     {
+		r = 0.0f, g = 0.0f, b = 0.0f, a = 1.0f;
+
         readline(fin,line,LINE_SIZE);
         if (line[0]=='#' || line[0]=='$')
         {
@@ -254,7 +263,7 @@ bool Model::readMTL(std::istream& fin)
             {
                 if (strncasecmp(line,"Ka ",3)==0)
                 {
-                    unsigned int fieldsRead = sscanf(line+3,"%f %f %f %f", &r, &g, &b, &a);
+                    /*unsigned int fieldsRead = sscanf(line+3,"%f %f %f %f", &r, &g, &b, &a);
 
                     if (fieldsRead==1)
                     {
@@ -277,11 +286,21 @@ bool Model::readMTL(std::istream& fin)
                         material->ambient[ 1 ] = g;
                         material->ambient[ 2 ] = b;
                         material->ambient[ 3 ] = a;
-                    }
+                    }*/
+
+					std::stringstream stream(line + 3);
+					if (stream >> r >> g >> b) {
+						material->ambient[0] = r;
+						material->ambient[1] = g;
+						material->ambient[2] = b;
+						if (stream >> a) {
+							material->ambient[3] = a;
+						}
+					}
                 }
                 else if (strncasecmp(line,"Kd ",3)==0)
                 {
-                    unsigned int fieldsRead = sscanf(line+3,"%f %f %f %f", &r, &g, &b, &a);
+                   /* unsigned int fieldsRead = sscanf(line+3,"%f %f %f %f", &r, &g, &b, &a);
 
                     if (fieldsRead==1)
                     {
@@ -304,11 +323,21 @@ bool Model::readMTL(std::istream& fin)
                         material->diffuse[ 1 ] = g;
                         material->diffuse[ 2 ] = b;
                         material->diffuse[ 3 ] = a;
-                    }
+                    }*/
+
+					std::stringstream stream(line + 3);
+					if (stream >> r >> g >> b) {
+						material->diffuse[0] = r;
+						material->diffuse[1] = g;
+						material->diffuse[2] = b;
+						if (stream >> a) {
+							material->diffuse[3] = a;
+						}
+					}
                 }
                 else if (strncasecmp(line,"Ks ",3)==0)
                 {
-                    unsigned int fieldsRead = sscanf(line+3,"%f %f %f %f", &r, &g, &b, &a);
+                   /* unsigned int fieldsRead = sscanf(line+3,"%f %f %f %f", &r, &g, &b, &a);
 
                     if (fieldsRead==1)
                     {
@@ -331,11 +360,22 @@ bool Model::readMTL(std::istream& fin)
                         material->specular[ 1 ] = g;
                         material->specular[ 2 ] = b;
                         material->specular[ 3 ] = a;
-                    }
+                    }*/
+
+					std::stringstream stream(line + 3);
+					if (stream >> r >> g >> b) {
+						material->specular[0] = r;
+						material->specular[1] = g;
+						material->specular[2] = b;
+						if (stream >> a) {
+							material->specular[3] = a;
+						}
+					}
+
                 }
                 else if (strncasecmp(line,"Ke ",3)==0)
                 {
-                    unsigned int fieldsRead = sscanf(line+3,"%f %f %f %f", &r, &g, &b, &a);
+                   /* unsigned int fieldsRead = sscanf(line+3,"%f %f %f %f", &r, &g, &b, &a);
 
                     if (fieldsRead==1)
                     {
@@ -358,11 +398,21 @@ bool Model::readMTL(std::istream& fin)
                         material->emissive[ 1 ] = g;
                         material->emissive[ 2 ] = b;
                         material->emissive[ 3 ] = a;
-                    }
+                    }*/
+
+					std::stringstream stream(line + 3);
+					if (stream >> r >> g >> b) {
+						material->emissive[0] = r;
+						material->emissive[1] = g;
+						material->emissive[2] = b;
+						if (stream >> a) {
+							material->emissive[3] = a;
+						}
+					}
                 }
                 else if (strncasecmp(line,"Tf ",3)==0)
                 {
-                    unsigned int fieldsRead = sscanf(line+3,"%f %f %f %f", &r, &g, &b, &a);
+                   /* unsigned int fieldsRead = sscanf(line+3,"%f %f %f %f", &r, &g, &b, &a);
 
                     if (fieldsRead==1)
                     {
@@ -385,35 +435,53 @@ bool Model::readMTL(std::istream& fin)
                         material->Tf[ 1 ] = g;
                         material->Tf[ 2 ] = b;
                         material->Tf[ 3 ] = a;
-                    }
+                    }*/
+
+					std::stringstream stream(line + 3);
+					if (stream >> r >> g >> b) {
+						material->Tf[0] = r;
+						material->Tf[1] = g;
+						material->Tf[2] = b;
+						if (stream >> a) {
+							material->Tf[3] = a;
+						}
+					}
                 }
                 else if (strncasecmp(line,"sharpness ",10)==0)
                 {
                     float sharpness = 0.0f;
-                    unsigned int fieldsRead = sscanf(line+10,"%f", &sharpness);
+                   /* unsigned int fieldsRead = sscanf(line+10,"%f", &sharpness);
 
-                    if (fieldsRead==1) material->sharpness = sharpness;
+                    if (fieldsRead==1) material->sharpness = sharpness;*/
+					std::stringstream stream(line + 10);
+					if (stream >> sharpness) material->sharpness = sharpness;
                 }
                 else if (strncasecmp(line,"illum ",6)==0)
                 {
                     int illum = 0;
-                    unsigned int fieldsRead = sscanf(line+6,"%d", &illum);
+                    /*unsigned int fieldsRead = sscanf(line+6,"%d", &illum);
 
-                    if (fieldsRead==1) material->illum = illum;
+                    if (fieldsRead==1) material->illum = illum;*/
+					std::stringstream stream(line + 6);
+					if (stream >> illum) material->illum = illum;
                 }
                 else if (strncasecmp(line,"Ns ",3)==0)
                 {
                     int Ns = 0;
-                    unsigned int fieldsRead = sscanf(line+3,"%d", &Ns);
+                   /* unsigned int fieldsRead = sscanf(line+3,"%d", &Ns);
 
-                    if (fieldsRead==1) material->Ns = Ns;
+                    if (fieldsRead==1) material->Ns = Ns;*/
+					std::stringstream stream(line + 3);
+					if (stream >> Ns) material->Ns = Ns;
                 }
                 else if (strncasecmp(line,"Ni ",3)==0)
                 {
                     int Ni = 0;
-                    unsigned int fieldsRead = sscanf(line+3,"%d", &Ni);
+					/*unsigned int fieldsRead = sscanf(line+3,"%d", &Ni);
 
-                    if (fieldsRead==1) material->Ni = Ni;
+                    if (fieldsRead==1) material->Ni = Ni;*/
+					std::stringstream stream(line + 3);
+					if (stream >> Ni) material->Ni = Ni;
                 }
                 //
                 // Tr - transparency
@@ -441,7 +509,7 @@ bool Model::readMTL(std::istream& fin)
                     if( !usingDissolve )
                     {
                         float alpha=1.0f;
-                        unsigned int fieldsRead = sscanf(line+3,"%f", &alpha);
+                       /* unsigned int fieldsRead = sscanf(line+3,"%f", &alpha);
 
                         if (fieldsRead==1)
                         {
@@ -449,7 +517,14 @@ bool Model::readMTL(std::istream& fin)
                             material->diffuse[3] = alpha;
                             material->specular[3] = alpha;
                             material->emissive[3] = alpha;
-                        }
+                        }*/
+						std::stringstream stream(line + 3);
+						if (stream >> alpha) {
+							material->ambient[3] = alpha;
+							material->diffuse[3] = alpha;
+							material->specular[3] = alpha;
+							material->emissive[3] = alpha;
+						}
                     }
                 }
                 //
@@ -464,7 +539,7 @@ bool Model::readMTL(std::istream& fin)
                 else if (strncasecmp(line,"d ",2)==0)
                 {
                     float alpha=1.0f;
-                    unsigned int fieldsRead = sscanf(line+2,"%f", &alpha);
+                    /*unsigned int fieldsRead = sscanf(line+2,"%f", &alpha);
 
                     if (fieldsRead==1)
                     {
@@ -473,7 +548,15 @@ bool Model::readMTL(std::istream& fin)
                         material->specular[3] = alpha;
                         material->emissive[3] = alpha;
                         usingDissolve = true;
-                    }
+                    }*/
+					std::stringstream stream(line + 2);
+					if (stream >> alpha) {
+						material->ambient[3] = alpha;
+						material->diffuse[3] = alpha;
+						material->specular[3] = alpha;
+						material->emissive[3] = alpha;
+						usingDissolve = true;
+					}
                 }
                 else if (strncasecmp(line,"map_Ka ",7)==0)
                 {
@@ -574,6 +657,9 @@ bool Model::readOBJ(std::istream& fin, const osgDB::ReaderWriter::Options* optio
 
     while (fin)
     {
+		x = 0.0f, y = 0.0f, z = 0.0f, w = 1.0f;
+		r = 0.0f, g = 0.0f, b = 0.0f, a = 1.0f;
+
         readline(fin,line,LINE_SIZE);
         if ((line[0]=='#' && !isZBrushColorField(line)) || line[0]=='$')
         {
@@ -611,7 +697,7 @@ bool Model::readOBJ(std::istream& fin, const osgDB::ReaderWriter::Options* optio
         {
             if (strncmp(line,"v ",2)==0)
             {
-                unsigned int fieldsRead = sscanf(line+2,"%f %f %f %f %f %f %f", &x, &y, &z, &w, &g, &b, &a);
+               /* unsigned int fieldsRead = sscanf(line+2,"%f %f %f %f %f %f %f", &x, &y, &z, &w, &g, &b, &a);
 
                 if (fieldsRead==1)
                     vertices.push_back(osg::Vec3(x,0.0f,0.0f));
@@ -630,23 +716,41 @@ bool Model::readOBJ(std::istream& fin, const osgDB::ReaderWriter::Options* optio
                 {
                     vertices.push_back(osg::Vec3(x,y,z));
                     colors.push_back(osg::Vec4(w, g, b, a));
-                }
+                }*/
+
+				std::stringstream stream(line + 2);
+				stream >> x >> y >> z;
+				if (stream >> w) {
+					if (stream >> g >> b) {
+						stream >> a;
+						colors.push_back(osg::Vec4(w, g, b, a));
+					}
+				}
+				vertices.push_back(osg::Vec3(x / w, y / w, z / w));
             }
             else if (strncmp(line,"vn ",3)==0)
             {
-                unsigned int fieldsRead = sscanf(line+3,"%f %f %f", &x, &y, &z);
+               /* unsigned int fieldsRead = sscanf(line+3,"%f %f %f", &x, &y, &z);
 
                 if (fieldsRead==1) normals.push_back(osg::Vec3(x,0.0f,0.0f));
                 else if (fieldsRead==2) normals.push_back(osg::Vec3(x,y,0.0f));
-                else if (fieldsRead==3) normals.push_back(osg::Vec3(x,y,z));
+                else if (fieldsRead==3) normals.push_back(osg::Vec3(x,y,z));*/
+
+				std::stringstream stream(line + 3);
+				stream >> x >> y >> z;
+				normals.push_back(osg::Vec3(x, y, z));
             }
             else if (strncmp(line,"vt ",3)==0)
             {
-                unsigned int fieldsRead = sscanf(line+3,"%f %f %f", &x, &y, &z);
+                /*unsigned int fieldsRead = sscanf(line+3,"%f %f %f", &x, &y, &z);
 
                 if (fieldsRead==1) texcoords.push_back(osg::Vec2(x,0.0f));
                 else if (fieldsRead==2) texcoords.push_back(osg::Vec2(x,y));
-                else if (fieldsRead==3) texcoords.push_back(osg::Vec2(x,y));
+                else if (fieldsRead==3) texcoords.push_back(osg::Vec2(x,y));*/
+
+				std::stringstream stream(line + 3);
+				stream >> x >> y;
+				texcoords.push_back(osg::Vec2(x, y));
             }
             else if (strncmp(line,"l ",2)==0 ||
                      strncmp(line,"p ",2)==0 ||
