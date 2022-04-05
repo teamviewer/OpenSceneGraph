@@ -489,6 +489,7 @@ osgDB::ReaderWriter::WriteResult ReaderWriterFBX::writeNode(
         pSdkManager->SetIOSettings(FbxIOSettings::Create(pSdkManager, IOSROOT));
 
         bool useFbxRoot = false;
+		bool onlyActiveChildren = false;
         bool ascii(false);
         std::string exportVersion;
         if (options)
@@ -513,6 +514,10 @@ osgDB::ReaderWriter::WriteResult ReaderWriterFBX::writeNode(
                 {
                     iss >> exportVersion;
                 }
+				else if (opt == "OnlyActiveChildren")
+				{
+					onlyActiveChildren = true;
+				}
             }
         }
 
@@ -530,6 +535,8 @@ osgDB::ReaderWriter::WriteResult ReaderWriterFBX::writeNode(
 
         pluginfbx::WriterNodeVisitor writerNodeVisitor(pScene, pSdkManager, filename,
             options, osgDB::getFilePath(node.getName().empty() ? filename : node.getName()));
+		if (onlyActiveChildren)
+			writerNodeVisitor.setTraversalMode(osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN);
         if (useFbxRoot && isBasicRootNode(node))
         {
             // If root node is a simple group, put all elements under the FBX root
