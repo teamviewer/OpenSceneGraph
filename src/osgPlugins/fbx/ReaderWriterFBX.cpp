@@ -450,6 +450,7 @@ ReaderWriterFBX::readNode(const std::string& filenameInit,
                 }
 
                 osgNode->setName(filenameInit);
+				osgNode->setUserValue("AuthoringTool", std::string(appName));
                 return osgNode;
             }
         }
