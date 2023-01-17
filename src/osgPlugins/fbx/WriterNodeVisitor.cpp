@@ -692,41 +692,41 @@ void WriterNodeVisitor::createListTriangle(const osg::Geometry* geo,
     }
 }
 
-void WriterNodeVisitor::apply(osg::Geode& node)
-{
-    FbxNode* parent = _curFbxNode;
-    FbxNode* nodeFBX = FbxNode::Create(_pSdkManager, node.getName().empty() ? "DefaultName" : node.getName().c_str());
-    _curFbxNode->AddChild(nodeFBX);
-    _curFbxNode = nodeFBX;
+// void WriterNodeVisitor::apply(osg::Geode& node)
+// {
+//     FbxNode* parent = _curFbxNode;
+//     FbxNode* nodeFBX = FbxNode::Create(_pSdkManager, node.getName().empty() ? "DefaultName" : node.getName().c_str());
+//     _curFbxNode->AddChild(nodeFBX);
+//     _curFbxNode = nodeFBX;
     
     
-    unsigned int count = node.getNumDrawables();
+//     unsigned int count = node.getNumDrawables();
 
-    // collect geometries from geode
-    GeometryList geometryList;
-    for (unsigned int i = 0; i < count; ++i)
-    {
-       const osg::Geometry* g = node.getDrawable(i)->asGeometry();
-       if (g)
-          geometryList.push_back(g);
-    }
+//     // collect geometries from geode
+//     GeometryList geometryList;
+//     for (unsigned int i = 0; i < count; ++i)
+//     {
+//        const osg::Geometry* g = node.getDrawable(i)->asGeometry();
+//        if (g)
+//           geometryList.push_back(g);
+//     }
 
-    if(node.getStateSet()){
-        pushStateSet(node.getStateSet());
-    }
+//     if(node.getStateSet()){
+//         pushStateSet(node.getStateSet());
+//     }
 
-    // process geometries in batch
-    processGeometryList(geometryList, node.getName());
+//     // process geometries in batch
+//     processGeometryList(geometryList, node.getName());
 
-    if(node.getStateSet()){
-        popStateSet(node.getStateSet());
-    }
+//     if(node.getStateSet()){
+//         popStateSet(node.getStateSet());
+//     }
 
-    if (succeedLastApply())
-        traverse(node);
+//     if (succeedLastApply())
+//         traverse(node);
 
-    _curFbxNode = parent;
-}
+//     _curFbxNode = parent;
+// }
 
 void WriterNodeVisitor::apply(osg::Geometry& geometry)
 {

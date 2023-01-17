@@ -94,7 +94,7 @@ class WriterNodeVisitor: public osg::NodeVisitor
         ///Set the flag _succeedLastApply to false.
         void failedApply() { _succeedLastApply = false; }
 
-        virtual void apply(osg::Geode& node);
+        //virtual void apply(osg::Geode& node);
         virtual void apply(osg::Geometry& node);
         virtual void apply(osg::Group& node);
         virtual void apply(osg::MatrixTransform& node);
