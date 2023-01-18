@@ -305,7 +305,9 @@ ReaderWriterFBX::readNode(const std::string& filenameInit,
             std::set<const FbxNode*> fbxSkeletons;
             findLinkedFbxSkeletonNodes(pNode, fbxSkeletons);
 
+            FbxString authoringToolName;
             OsgFbxReader::AuthoringTool authoringTool = OsgFbxReader::UNKNOWN;
+
             if (FbxDocumentInfo* pDocInfo = pScene->GetDocumentInfo())
             {
                 struct ToolName
@@ -335,6 +337,8 @@ ReaderWriterFBX::readNode(const std::string& filenameInit,
                         break;
                     }
                 }
+
+                authoringToolName = appName;
             }
 
 
@@ -450,7 +454,7 @@ ReaderWriterFBX::readNode(const std::string& filenameInit,
                 }
 
                 osgNode->setName(filenameInit);
-				osgNode->setUserValue("AuthoringTool", std::string(appName));
+				osgNode->setUserValue("AuthoringTool", std::string(authoringToolName));
                 return osgNode;
             }
         }
