@@ -15,7 +15,6 @@
 #include <osgManipulator/ScaleAxisDragger>
 
 #include <osg/Geometry>
-#include <osg/Geode>
 #include <osg/Quat>
 
 using namespace osgManipulator;

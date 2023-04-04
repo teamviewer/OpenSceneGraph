@@ -150,7 +150,7 @@ std::string fragShader =
 "}                                                             \n"
 ;
 
-///This class provides a basic wraper for a Uniform Buffer Object
+///This class provides a basic wrapper for a Uniform Buffer Object
 ///or UBO, and provides the storage for the texture handles
 class BindlessBuffer: public osg::Referenced{
 public:
@@ -292,7 +292,7 @@ void BindlessTexture::applyOnce(osg::State& state) const
         // compute the dimensions of the texture.
         computeRequiredTextureDimensions(state,*image,_textureWidth, _textureHeight, _numMipmapLevels);
         textureObject = generateAndAssignTextureObject(contextID,GL_TEXTURE_2D,_numMipmapLevels,_internalFormat,_textureWidth,_textureHeight,1,_borderWidth);
-        textureObject->bind();
+        textureObject->bind(state);
         applyTexParameters(GL_TEXTURE_2D,state);
 
         applyTexImage2D_load(state,GL_TEXTURE_2D,image.get(),
@@ -596,4 +596,3 @@ int main(int argc, char** argv)
 
     return viewer.run();
 }
-

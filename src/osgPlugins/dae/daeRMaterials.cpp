@@ -280,10 +280,10 @@ void daeReader::processProfileCOMMON(osg::StateSet *ss, domProfile_COMMON *pc )
 {
     domProfile_COMMON::domTechnique *teq = pc->getTechnique();
 
-    domProfile_COMMON::domTechnique::domConstant *c = teq->getConstant();
-    domProfile_COMMON::domTechnique::domLambert *l = teq->getLambert();
-    domProfile_COMMON::domTechnique::domPhong *p = teq->getPhong();
-    domProfile_COMMON::domTechnique::domBlinn *b = teq->getBlinn();
+    domProfile_COMMON::domTechnique::domConstant *c = teq ? teq->getConstant() : NULL;
+    domProfile_COMMON::domTechnique::domLambert *l = teq ? teq->getLambert() : NULL;
+    domProfile_COMMON::domTechnique::domPhong *p = teq ? teq->getPhong() : NULL;
+    domProfile_COMMON::domTechnique::domBlinn *b = teq ? teq->getBlinn() : NULL;
 
     ss->setMode( GL_CULL_FACE, osg::StateAttribute::ON ); // Cull Back faces
 
@@ -768,7 +768,7 @@ bool daeReader::GetFloat4Param(xsNCName Reference, domFloat4 &f4) const
         size_t NumberOfSetParams = SetParamArray.getCount();
         for (size_t i = 0; i < NumberOfSetParams; i++)
         {
-            // Just do a simple comaprison of the ref strings for the time being
+            // Just do a simple comparison of the ref strings for the time being
             if (0 == strcmp(SetParamArray[i]->getRef(), Reference))
             {
                 if (NULL != SetParamArray[i]->getFx_basic_type_common() && (NULL != SetParamArray[i]->getFx_basic_type_common()->getFloat4()))
@@ -815,7 +815,7 @@ bool daeReader::GetFloatParam(xsNCName Reference, domFloat &f) const
         size_t NumberOfSetParams = SetParamArray.getCount();
         for (size_t i = 0; i < NumberOfSetParams; i++)
         {
-            // Just do a simple comaprison of the ref strings for the time being
+            // Just do a simple comparison of the ref strings for the time being
             if (0 == strcmp(SetParamArray[i]->getRef(), Reference))
             {
                 if (NULL != SetParamArray[i]->getFx_basic_type_common() && (NULL != SetParamArray[i]->getFx_basic_type_common()->getFloat()))
@@ -907,7 +907,7 @@ std::string daeReader::processImagePath(const domImage* pDomImage) const
                 OSG_WARN << "Unable to get path from URI." << std::endl;
                 return std::string();
             }
-#ifdef WIN32
+#ifdef _WIN32
             // If the path has a drive specifier or a UNC name then strip the leading /
             if (path.size() > 2 && (path[2] == ':' || (path[1] == '/' && path[2] == '/')))
                 return path.substr(1, std::string::npos);
@@ -1136,7 +1136,7 @@ osg::Texture2D* daeReader::processTexture(
     }
     else
     {
-        osg::ref_ptr<osg::Image> img = osgDB::readRefImageFile(parameters.filename);
+        osg::ref_ptr<osg::Image> img = osgDB::readRefImageFile(parameters.filename, _pluginOptions.options.get());
 
         if (!img.valid())
         {

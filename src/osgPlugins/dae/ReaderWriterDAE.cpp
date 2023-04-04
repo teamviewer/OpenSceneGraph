@@ -26,7 +26,7 @@
 #include "daeReader.h"
 #include "daeWriter.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "windows.h"
 #endif
 
@@ -143,6 +143,9 @@ ReaderWriterDAE::readNode(const std::string& fname,
 
     std::string fileName( osgDB::findDataFile( fname, options ) );
     if( fileName.empty() ) return ReadResult::FILE_NOT_FOUND;
+    
+    pluginOptions.options = options ? osg::clone(options, osg::CopyOp::SHALLOW_COPY) : new Options;
+    pluginOptions.options->getDatabasePathList().push_front(osgDB::getFilePath(fileName));
 
     OSG_INFO << "ReaderWriterDAE( \"" << fileName << "\" )" << std::endl;
 

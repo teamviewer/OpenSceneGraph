@@ -15,7 +15,6 @@
 #include <osgManipulator/TrackballDragger>
 #include <osgManipulator/AntiSquish>
 
-#include <osg/Geode>
 #include <osg/Geometry>
 #include <osg/PolygonMode>
 #include <osg/CullFace>

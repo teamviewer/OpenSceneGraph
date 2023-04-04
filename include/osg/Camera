@@ -599,12 +599,12 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
                 Callback(org, copyop) {}
 
             META_Object(osg, DrawCallback);
-            
+
             /** Functor method called by rendering thread to recursively launch operator() on _nestedcallback **/
             inline void run(osg::RenderInfo& renderInfo) const
             {
                 operator () (renderInfo);
-                
+
                 if (_nestedCallback.valid())
                     ((const DrawCallback*)_nestedCallback.get())->run(renderInfo);
             }
@@ -614,6 +614,23 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
 
             /** Functor method, provided for backwards compatibility, called by operator() (osg::RenderInfo& renderInfo) method.**/
             virtual void operator () (const osg::Camera& /*camera*/) const {}
+
+            /** Resize any per context GLObject buffers to specified size. */
+            virtual void resizeGLObjectBuffers(unsigned int maxSize)
+            {
+                if (_nestedCallback.valid())
+                    _nestedCallback->resizeGLObjectBuffers(maxSize);
+            }
+
+            /** If State is non-zero, this function releases any associated OpenGL objects for
+            * the specified graphics context. Otherwise, releases OpenGL objexts
+            * for all graphics contexts. */
+            virtual void releaseGLObjects(osg::State* state = 0) const
+            {
+                if (_nestedCallback.valid())
+                    _nestedCallback->releaseGLObjects(state);
+            }
+
         };
 
         /** Set the initial draw callback for custom operations to be done before the drawing of the camera's subgraph and pre render stages.*/
@@ -624,6 +641,14 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
 
         /** Get the const initial draw callback.*/
         const DrawCallback* getInitialDrawCallback() const { return _initialDrawCallback.get(); }
+
+        /** Convenience method to find a nested initial draw callback by type. */
+        template <typename T>
+        T* findInitialDrawCallback() { return osg::Callback::findNestedCallback<T>(_initialDrawCallback.get()); }
+
+        /** Convenience method to find a nested initial draw callback by type. */
+        template <typename T>
+        const T* findInitialDrawCallback() const { return osg::Callback::findNestedCallback<T>(_initialDrawCallback.get()); }
 
         /** Convenience method that sets DrawCallback Initial callback of the node if it doesn't exist, or nest it into the existing one. */
         inline void addInitialDrawCallback(DrawCallback* nc)
@@ -663,6 +688,14 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
         /** Get the const pre draw callback.*/
         const DrawCallback* getPreDrawCallback() const { return _preDrawCallback.get(); }
 
+        /** Convenience method to find a nested pre draw callback by type. */
+        template <typename T>
+        T* findPreDrawCallback() { return osg::Callback::findNestedCallback<T>(_preDrawCallback.get()); }
+
+        /** Convenience method to find a nested pre draw callback by type. */
+        template <typename T>
+        const T* findPreDrawCallback() const { return osg::Callback::findNestedCallback<T>(_preDrawCallback.get()); }
+
         /** Convenience method that sets DrawCallback Initial callback of the node if it doesn't exist, or nest it into the existing one. */
         inline void addPreDrawCallback(DrawCallback* nc)
         {
@@ -701,6 +734,14 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
         /** Get the const post draw callback.*/
         const DrawCallback* getPostDrawCallback() const { return _postDrawCallback.get(); }
 
+        /** Convenience method to find a nested post draw callback by type. */
+        template <typename T>
+        T* findPostDrawCallback() { return osg::Callback::findNestedCallback<T>(_postDrawCallback.get()); }
+
+        /** Convenience method to find a nested post draw callback by type. */
+        template <typename T>
+        const T* findPostDrawCallback() const { return osg::Callback::findNestedCallback<T>(_postDrawCallback.get()); }
+
         /** Convenience method that sets DrawCallback Initial callback of the node if it doesn't exist, or nest it into the existing one. */
         inline void addPostDrawCallback(DrawCallback* nc)
         {
@@ -738,6 +779,14 @@ class OSG_EXPORT Camera : public Transform, public CullSettings
 
         /** Get the const final draw callback.*/
         const DrawCallback* getFinalDrawCallback() const { return _finalDrawCallback.get(); }
+
+        /** Convenience method to find a nested final draw callback by type. */
+        template <typename T>
+        T* findFinalDrawCallback() { return osg::Callback::findNestedCallback<T>(_finalDrawCallback.get()); }
+
+        /** Convenience method to find a nested final draw callback by type. */
+        template <typename T>
+        const T* findFinalDrawCallback() const { return osg::Callback::findNestedCallback<T>(_finalDrawCallback.get()); }
 
         /** Convenience method that sets DrawCallback Initial callback of the node if it doesn't exist, or nest it into the existing one. */
         inline void addFinalDrawCallback(DrawCallback* nc)

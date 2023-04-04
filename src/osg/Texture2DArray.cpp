@@ -276,7 +276,7 @@ void Texture2DArray::apply(State& state) const
     if (textureObject)
     {
         // bind texture object
-        textureObject->bind();
+        textureObject->bind(state);
 
         // if subload is specified, then use it to subload the images to GPU memory
         if (_subloadCallback.valid())
@@ -323,7 +323,7 @@ void Texture2DArray::apply(State& state) const
     {
         // generate texture (i.e. glGenTexture) and apply parameters
         textureObject = generateAndAssignTextureObject(contextID, GL_TEXTURE_2D_ARRAY);
-        textureObject->bind();
+        textureObject->bind(state);
         applyTexParameters(GL_TEXTURE_2D_ARRAY, state);
         _subloadCallback->load(*this,state);
     }
@@ -348,12 +348,12 @@ void Texture2DArray::apply(State& state) const
                     _textureWidth, _textureHeight, textureDepth,0);
 
         // bind texture
-        textureObject->bind();
+        textureObject->bind(state);
 
         applyTexParameters(GL_TEXTURE_2D_ARRAY, state);
 
         // First we need to allocate the texture memory
-        if(texStorageSizedInternalFormat!=0)
+        if(texStorageSizedInternalFormat!=0 && !textureObject->_allocated)
         {
             extensions->glTexStorage3D(GL_TEXTURE_2D_ARRAY, osg::maximum(_numMipmapLevels,1), texStorageSizedInternalFormat, _textureWidth, _textureHeight, textureDepth);
         }
@@ -400,11 +400,8 @@ void Texture2DArray::apply(State& state) const
             osg::Image* image = itr->get();
             if (image)
             {
-                if (getModifiedCount(n,contextID) != image->getModifiedCount())
-                {
-                    getModifiedCount(n,contextID) = image->getModifiedCount();
-                    applyTexImage2DArray_subload(state, image, n, _textureWidth, _textureHeight, image->r(), _internalFormat, _numMipmapLevels);
-                }
+                getModifiedCount(n,contextID) = image->getModifiedCount();
+                applyTexImage2DArray_subload(state, image, n, _textureWidth, _textureHeight, image->r(), _internalFormat, _numMipmapLevels);
                 n += image->r();
             }
         }
@@ -448,11 +445,11 @@ void Texture2DArray::apply(State& state) const
                 texStorageSizedInternalFormat!=0 ? texStorageSizedInternalFormat :_internalFormat,
                 _textureWidth, _textureHeight, _textureDepth, 0);
 
-        textureObject->bind();
+        textureObject->bind(state);
 
         applyTexParameters(GL_TEXTURE_2D_ARRAY,state);
 
-        if (texStorageSizedInternalFormat!=0)
+        if (texStorageSizedInternalFormat!=0 && !textureObject->_allocated)
         {
             extensions->glTexStorage3D( GL_TEXTURE_2D_ARRAY, osg::maximum(_numMipmapLevels,1), texStorageSizedInternalFormat, _textureWidth, _textureHeight, _textureDepth);
         }
@@ -463,6 +460,8 @@ void Texture2DArray::apply(State& state) const
                      _sourceFormat ? _sourceFormat : _internalFormat,
                      _sourceType ? _sourceType : GL_UNSIGNED_BYTE,
                      0);
+
+        textureObject->setAllocated(_numMipmapLevels, texStorageSizedInternalFormat!=0 ? texStorageSizedInternalFormat :_internalFormat, _textureWidth, _textureHeight, _textureDepth, 0);
     }
 
     // nothing before, so just unbind the texture target
@@ -681,7 +680,7 @@ void Texture2DArray::copyTexSubImage2DArray(State& state, int xoffset, int yoffs
     // if texture object is valid
     if (textureObject != 0)
     {
-        textureObject->bind();
+        textureObject->bind(state);
 
         applyTexParameters(GL_TEXTURE_2D_ARRAY,state);
         extensions->glCopyTexSubImage3D( GL_TEXTURE_2D_ARRAY, 0, xoffset,yoffset,zoffset, x, y, width, height);
@@ -720,7 +719,7 @@ void Texture2DArray::allocateMipmap(State& state) const
         }
 
         // bind texture
-        textureObject->bind();
+        textureObject->bind(state);
 
         // compute number of mipmap levels
         int width = _textureWidth;

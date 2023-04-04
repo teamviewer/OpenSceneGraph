@@ -139,7 +139,34 @@ osg::VertexArrayState* TextBase::createVertexArrayStateImplementation(osg::Rende
 
 void TextBase::compileGLObjects(osg::RenderInfo& renderInfo) const
 {
-    Drawable::compileGLObjects(renderInfo);
+    State& state = *renderInfo.getState();
+    if (renderInfo.getState()->useVertexBufferObject(_supportsVertexBufferObjects && _useVertexBufferObjects))
+    {
+        unsigned int contextID = state.getContextID();
+        GLExtensions* extensions = state.get<GLExtensions>();
+        if (state.useVertexArrayObject(_useVertexArrayObject))
+        {
+            VertexArrayState* vas = 0;
+
+            _vertexArrayStateList[contextID] = vas = createVertexArrayState(renderInfo);
+
+            State::SetCurrentVertexArrayStateProxy setVASProxy(state, vas);
+
+            state.bindVertexArrayObject(vas);
+
+            drawImplementation(renderInfo);
+
+            state.unbindVertexArrayObject();
+        }
+        else
+        {
+            drawImplementation(renderInfo);
+        }
+
+        // unbind the BufferObjects
+        extensions->glBindBuffer(GL_ARRAY_BUFFER_ARB,0);
+        extensions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER_ARB,0);
+    }
 }
 
 void TextBase::resizeGLObjectBuffers(unsigned int maxSize)
@@ -457,6 +484,14 @@ void TextBase::computePositions()
 
 void TextBase::computePositionsImplementation()
 {
+    _normal = osg::Vec3(0.0f,0.0f,1.0f);
+
+    if (_text.empty())
+    {
+        _offset = Vec3();
+        return;
+    }
+
     switch(_alignment)
     {
         case LEFT_TOP:      _offset.set(_textBB.xMin(),_textBB.yMax(),_textBB.zMin()); break;
@@ -479,8 +514,6 @@ void TextBase::computePositionsImplementation()
         case CENTER_BOTTOM_BASE_LINE:  _offset.set((_textBB.xMax()+_textBB.xMin())*0.5f,-_characterHeight*(1.0 + _lineSpacing)*(_lineCount-1),0.0f); break;
         case RIGHT_BOTTOM_BASE_LINE:  _offset.set(_textBB.xMax(),-_characterHeight*(1.0 + _lineSpacing)*(_lineCount-1),0.0f); break;
     }
-
-    _normal = osg::Vec3(0.0f,0.0f,1.0f);
 }
 
 bool TextBase::computeMatrix(osg::Matrix& matrix, osg::State* state) const

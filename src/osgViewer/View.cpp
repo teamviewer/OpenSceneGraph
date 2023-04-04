@@ -308,11 +308,13 @@ void View::setSceneData(osg::Node* node)
 
     if (getSceneData())
     {
+#if 0
         #if defined(OSG_GLES2_AVAILABLE)
             osgUtil::ShaderGenVisitor sgv;
             getSceneData()->getOrCreateStateSet();
             getSceneData()->accept(sgv);
         #endif
+#endif
 
         // now make sure the scene graph is set up with the correct DataVariance to protect the dynamic elements of
         // the scene graph from being run in parallel.
@@ -857,7 +859,7 @@ void View::requestWarpPointer(float x,float y)
             getEventQueue()->mouseWarped(x,y);
             if (gw->getEventQueue()->getCurrentEventState()->getMouseYOrientation()==osgGA::GUIEventAdapter::Y_INCREASING_DOWNWARDS)
             {
-                local_y = gw->getTraits()->height - local_y;
+                local_y = gw->getTraits()->height - 1 - local_y;
             }
             const_cast<osgViewer::GraphicsWindow*>(gw)->getEventQueue()->mouseWarped(local_x,local_y);
             const_cast<osgViewer::GraphicsWindow*>(gw)->requestWarpPointer(local_x, local_y);
@@ -915,7 +917,7 @@ const osg::Camera* View::getCameraContainingPosition(float x, float y, float& lo
         new_y *= static_cast<double>(_camera->getGraphicsContext()->getTraits()->height);
 
         if (new_x >= (viewport->x()-epsilon) && new_y >= (viewport->y()-epsilon) &&
-            new_x < (viewport->x()+viewport->width()-1.0+epsilon) && new_y <= (viewport->y()+viewport->height()-1.0+epsilon) )
+            new_x < (viewport->x()+viewport->width()+epsilon) && new_y < (viewport->y()+viewport->height()+epsilon) )
         {
             local_x = new_x;
             local_y = new_y;
@@ -963,7 +965,7 @@ const osg::Camera* View::getCameraContainingPosition(float x, float y, float& lo
 
             if (viewport &&
                 new_coord.x() >= (viewport->x()-epsilon) && new_coord.y() >= (viewport->y()-epsilon) &&
-                new_coord.x() < (viewport->x()+viewport->width()-1.0+epsilon) && new_coord.y() <= (viewport->y()+viewport->height()-1.0+epsilon) )
+                new_coord.x() < (viewport->x()+viewport->width()+epsilon) && new_coord.y() < (viewport->y()+viewport->height()+epsilon) )
             {
                 // OSG_NOTICE<<"  in viewport "<<std::endl;;
 
@@ -1459,7 +1461,7 @@ void View::assignStereoOrKeystoneToCamera(osg::Camera* camera, osg::DisplaySetti
     {
         case(osg::DisplaySettings::QUAD_BUFFER):
         {
-            // disconect the camera from the graphics context.
+            // disconnect the camera from the graphics context.
             camera->setGraphicsContext(0);
 
             // left Camera left buffer
@@ -1546,7 +1548,7 @@ void View::assignStereoOrKeystoneToCamera(osg::Camera* camera, osg::DisplaySetti
         }
         case(osg::DisplaySettings::ANAGLYPHIC):
         {
-            // disconect the camera from the graphics context.
+            // disconnect the camera from the graphics context.
             camera->setGraphicsContext(0);
 
             // left Camera red
@@ -1679,7 +1681,7 @@ void View::assignStereoOrKeystoneToCamera(osg::Camera* camera, osg::DisplaySetti
         }
         case(osg::DisplaySettings::HORIZONTAL_SPLIT):
         {
-            // disconect the camera from the graphics context.
+            // disconnect the camera from the graphics context.
             camera->setGraphicsContext(0);
 
             bool left_eye_left_viewport = ds->getSplitStereoHorizontalEyeMapping()==osg::DisplaySettings::LEFT_EYE_LEFT_VIEWPORT;
@@ -1771,7 +1773,7 @@ void View::assignStereoOrKeystoneToCamera(osg::Camera* camera, osg::DisplaySetti
         }
         case(osg::DisplaySettings::VERTICAL_SPLIT):
         {
-            // disconect the camera from the graphics context.
+            // disconnect the camera from the graphics context.
             camera->setGraphicsContext(0);
 
             bool left_eye_bottom_viewport = ds->getSplitStereoVerticalEyeMapping()==osg::DisplaySettings::LEFT_EYE_BOTTOM_VIEWPORT;
@@ -1783,7 +1785,7 @@ void View::assignStereoOrKeystoneToCamera(osg::Camera* camera, osg::DisplaySetti
                                0, left_start, traits->width, traits->height/2, traits->doubleBuffer ? GL_BACK : GL_FRONT,
                                -1.0);
 
-            // top vieport camera
+            // top viewport camera
             osg::ref_ptr<osg::Camera> right_camera = assignStereoCamera(ds, gc.get(),
                                0, right_start, traits->width, traits->height/2, traits->doubleBuffer ? GL_BACK : GL_FRONT,
                                1.0);
@@ -1870,7 +1872,7 @@ void View::assignStereoOrKeystoneToCamera(osg::Camera* camera, osg::DisplaySetti
         }
         case(osg::DisplaySettings::LEFT_EYE):
         {
-            // disconect the camera from the graphics context.
+            // disconnect the camera from the graphics context.
             camera->setGraphicsContext(0);
 
             // single window, whole window, just left eye offsets
@@ -1921,7 +1923,7 @@ void View::assignStereoOrKeystoneToCamera(osg::Camera* camera, osg::DisplaySetti
         }
         case(osg::DisplaySettings::RIGHT_EYE):
         {
-            // disconect the camera from the graphics context.
+            // disconnect the camera from the graphics context.
             camera->setGraphicsContext(0);
 
             // single window, whole window, just right eye offsets
@@ -1973,7 +1975,7 @@ void View::assignStereoOrKeystoneToCamera(osg::Camera* camera, osg::DisplaySetti
         case(osg::DisplaySettings::VERTICAL_INTERLACE):
         case(osg::DisplaySettings::CHECKERBOARD):
         {
-            // disconect the camera from the graphics context.
+            // disconnect the camera from the graphics context.
             camera->setGraphicsContext(0);
 
             // set up the stencil buffer
