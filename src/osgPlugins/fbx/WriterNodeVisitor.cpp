@@ -767,5 +767,34 @@ void WriterNodeVisitor::apply(osg::MatrixTransform& node)
     _curFbxNode = parent;
 }
 
+void WriterNodeVisitor::apply(osg::PositionAttitudeTransform& node)
+{
+    FbxNode* parent = _curFbxNode;
+    _curFbxNode = FbxNode::Create(_pSdkManager, node.getName().empty() ? "DefaultName" : node.getName().c_str());
+    parent->AddChild(_curFbxNode);
+
+    osg::Vec3 pos = node.getPosition();
+    osg::Vec3 scl = node.getScale();
+    osg::Quat rot = node.getAttitude();
+
+    _curFbxNode->LclTranslation.Set(FbxDouble3(pos.x(), pos.y(), pos.z()));
+    _curFbxNode->LclScaling.Set(FbxDouble3(scl.x(), scl.y(), scl.z()));
+
+    FbxAMatrix mat;
+
+    FbxQuaternion q(rot.x(), rot.y(), rot.z(), rot.w());
+    mat.SetQ(q);
+    FbxVector4 vec4 = mat.GetR();
+
+    _curFbxNode->LclRotation.Set(FbxDouble3(vec4[0], vec4[1], vec4[2]));
+
+    traverse(node);
+
+	if (_listTriangles.size() > 0)
+		buildFaces(node.getName(), _geometryList, _listTriangles, _vertexcolors, _texcoords);
+
+    _curFbxNode = parent;
+}
+
 // end namespace pluginfbx
 }

@@ -93,6 +93,7 @@ class WriterNodeVisitor: public osg::NodeVisitor
         virtual void apply(osg::Geometry& node);
         virtual void apply(osg::Group& node);
         virtual void apply(osg::MatrixTransform& node);
+        virtual void apply(osg::PositionAttitudeTransform& node);
         
         void traverse (osg::Node& node)
         {
