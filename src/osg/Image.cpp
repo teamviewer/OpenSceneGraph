@@ -356,14 +356,58 @@ GLenum Image::computePixelFormat(GLenum format)
         case(GL_LUMINANCE_ALPHA32F_ARB):
             return GL_LUMINANCE_ALPHA;
 
+        case (GL_R16F):
+        case (GL_R32F):
+        case (GL_R8):
+        case (GL_R8_SNORM):
+        case (GL_R16):
+        case (GL_R16_SNORM):
+            return GL_RED;
+
+        case (GL_R8I):
+        case (GL_R8UI):
+        case (GL_R16I):
+        case (GL_R16UI):
+        case (GL_R32I):
+        case (GL_R32UI):
+            return GL_RED_INTEGER_EXT;
+
+        case (GL_RG16F):
+        case (GL_RG32F):
+        case (GL_RG8):
+        case (GL_RG8_SNORM):
+        case (GL_RG16):
+        case (GL_RG16_SNORM):
+            return GL_RG;
+
+        case (GL_RG8I):
+        case (GL_RG8UI):
+        case (GL_RG16I):
+        case (GL_RG16UI):
+        case (GL_RG32I):
+        case (GL_RG32UI):
+            return GL_RG_INTEGER;
+
         case(GL_RGB32F_ARB):
         case(GL_RGB16F_ARB):
+        case(GL_R3_G3_B2):
+        case(GL_RGB4):
+        case(GL_RGB5):
+        case(GL_RGB8):
+        case(GL_RGB8_SNORM):
+        case(GL_RGB10):
+        case(GL_RGB12):
+        case(GL_SRGB8):
             return GL_RGB;
 
         case(GL_RGBA8):
         case(GL_RGBA16):
         case(GL_RGBA32F_ARB):
         case(GL_RGBA16F_ARB):
+        case(GL_RGBA8_SNORM):
+        case(GL_RGB10_A2):
+        case(GL_RGBA12):
+        case(GL_SRGB8_ALPHA8):
             return GL_RGBA;
 
         case(GL_ALPHA8I_EXT):
@@ -493,9 +537,12 @@ unsigned int Image::computeNumComponents(GLenum pixelFormat)
     switch(pixelFormat)
     {
         case(GL_COMPRESSED_RGB_S3TC_DXT1_EXT): return 3;
-        case(GL_COMPRESSED_RGBA_S3TC_DXT1_EXT): return 4;
+        case(GL_COMPRESSED_SRGB_S3TC_DXT1_EXT): return 3;
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT): return 4;
         case(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT): return 4;
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT): return 4;
         case(GL_COMPRESSED_RGBA_S3TC_DXT5_EXT): return 4;
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT): return 4;
         case(GL_COMPRESSED_SIGNED_RED_RGTC1_EXT): return 1;
         case(GL_COMPRESSED_RED_RGTC1_EXT):   return 1;
         case(GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT): return 2;
@@ -535,9 +582,31 @@ unsigned int Image::computeNumComponents(GLenum pixelFormat)
         case(GL_ALPHA32UI_EXT): return 1;
         case(GL_ALPHA16F_ARB): return 1;
         case(GL_ALPHA32F_ARB): return 1;
+        case(GL_R16F): return 1;
         case(GL_R32F): return 1;
+        case(GL_R8): return 1;
+        case(GL_R8_SNORM): return 1;
+        case(GL_R16): return 1;
+        case(GL_R16_SNORM): return 1;
+        case(GL_R8I): return 1;
+        case(GL_R8UI): return 1;
+        case(GL_R16I): return 1;
+        case(GL_R16UI): return 1;
+        case(GL_R32I): return 1;
+        case(GL_R32UI): return 1;
         case(GL_RG): return 2;
+        case(GL_RG16F): return 2;
         case(GL_RG32F): return 2;
+        case(GL_RG8): return 2;
+        case(GL_RG8_SNORM): return 2;
+        case(GL_RG16): return 2;
+        case(GL_RG16_SNORM): return 2;
+        case(GL_RG8I): return 2;
+        case(GL_RG8UI): return 2;
+        case(GL_RG16I): return 2;
+        case(GL_RG16UI): return 2;
+        case(GL_RG32I): return 2;
+        case(GL_RG32UI): return 2;
         case(GL_RGB): return 3;
         case(GL_BGR): return 3;
         case(GL_RGB8I_EXT): return 3;
@@ -653,9 +722,13 @@ unsigned int Image::computePixelSizeInBits(GLenum format,GLenum type)
     switch(format)
     {
         case(GL_COMPRESSED_RGB_S3TC_DXT1_EXT): return 4;
+        case(GL_COMPRESSED_SRGB_S3TC_DXT1_EXT): return 4;
         case(GL_COMPRESSED_RGBA_S3TC_DXT1_EXT): return 4;
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT): return 4;
         case(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT): return 8;
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT): return 8;
         case(GL_COMPRESSED_RGBA_S3TC_DXT5_EXT): return 8;
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT): return 8;
         case(GL_COMPRESSED_SIGNED_RED_RGTC1_EXT): return 4;
         case(GL_COMPRESSED_RED_RGTC1_EXT):   return 4;
         case(GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT): return 8;
@@ -683,7 +756,7 @@ unsigned int Image::computePixelSizeInBits(GLenum format,GLenum type)
     // which raises the question of how to actually query for these sizes...
     // will need to revisit this issue, for now just report an error.
     // this is possible a bit of mute point though as since the ARB compressed formats
-    // aren't yet used for storing images to disk, so its likely that users wont have
+    // aren't yet used for storing images to disk, so its likely that users won't have
     // osg::Image's for pixel formats set the ARB compressed formats, just using these
     // compressed formats as internal texture modes.  This is very much speculation though
     // if get the below error then its time to revist this issue :-)
@@ -876,10 +949,14 @@ unsigned int Image::computeBlockSize(GLenum pixelFormat, GLenum packing)
     switch(pixelFormat)
     {
         case(GL_COMPRESSED_RGB_S3TC_DXT1_EXT):
+        case(GL_COMPRESSED_SRGB_S3TC_DXT1_EXT):
         case(GL_COMPRESSED_RGBA_S3TC_DXT1_EXT):
-            return osg::maximum(8u,packing); // block size of 8
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT):
+            return osg::maximum(8u, packing); // block size of 8
         case(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT):
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT):
         case(GL_COMPRESSED_RGBA_S3TC_DXT5_EXT):
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT):
         case(GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG):
         case(GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG):
         case(GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG):
@@ -1029,9 +1106,13 @@ bool Image::isCompressed() const
         case(GL_COMPRESSED_RGBA_ARB):
         case(GL_COMPRESSED_RGB_ARB):
         case(GL_COMPRESSED_RGB_S3TC_DXT1_EXT):
+        case(GL_COMPRESSED_SRGB_S3TC_DXT1_EXT):
         case(GL_COMPRESSED_RGBA_S3TC_DXT1_EXT):
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT):
         case(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT):
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT):
         case(GL_COMPRESSED_RGBA_S3TC_DXT5_EXT):
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT):
         case(GL_COMPRESSED_SIGNED_RED_RGTC1_EXT):
         case(GL_COMPRESSED_RED_RGTC1_EXT):
         case(GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT):
@@ -1630,11 +1711,11 @@ void Image::copySubImage(int s_offset, int t_offset, int r_offset, const osg::Im
         }
         unsigned int rowWidthInBlocks = (_s + footprint.x() - 1) / footprint.x();
         unsigned int blockSize = computeBlockSize(_pixelFormat, 0);
-        data_destination = _data + blockSize * (rowWidthInBlocks * t_offset + (s_offset / footprint.x()));
+        data_destination = _data + blockSize * (rowWidthInBlocks * (t_offset / footprint.y()) + (s_offset / footprint.x()));
         unsigned int copy_width = (osg::minimum(source->s(), _s - s_offset) + footprint.x() - 1) / footprint.x();
         unsigned int copy_height = (osg::minimum(source->t(), _t - t_offset) + footprint.y() - 1) / footprint.y();
         unsigned int dstRowStep = blockSize * rowWidthInBlocks;
-        unsigned int srcRowStep = blockSize * (source->_s + footprint.x() - 1) / footprint.x();
+        unsigned int srcRowStep = blockSize * ((source->_s + footprint.x() - 1) / footprint.x());
         const unsigned char* data_source = source->data(0, 0, 0);
         for (unsigned int row = 0; row < copy_height; row += 1) { //copy blocks in a row, footprint.y() rows at a time
             memcpy(data_destination, data_source, copy_width * blockSize);
@@ -1947,10 +2028,14 @@ bool Image::isImageTranslucent() const
         case(GL_BGR):
             return false;
         case(GL_COMPRESSED_RGB_S3TC_DXT1_EXT):
+        case(GL_COMPRESSED_SRGB_S3TC_DXT1_EXT):
             return false;
         case(GL_COMPRESSED_RGBA_S3TC_DXT1_EXT):
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT):
         case(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT):
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT):
         case(GL_COMPRESSED_RGBA_S3TC_DXT5_EXT):
+        case(GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT):
             return dxtc_tool::isCompressedImageTranslucent(_s, _t, _pixelFormat, _data);
         default:
             return false;

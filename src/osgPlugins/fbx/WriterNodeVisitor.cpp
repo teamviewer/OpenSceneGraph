@@ -448,7 +448,6 @@ WriterNodeVisitor::setLayerTextureAndMaterial(FbxMesh* mesh)
 void
 WriterNodeVisitor::setControlPointAndNormalsAndUV(const GeometryList& geometryList,
                                                   MapIndices&       index_vert,
-	                                              bool              vertexcolors,
                                                   bool              texcoords,
                                                   FbxMesh*         mesh)
 {
@@ -462,14 +461,6 @@ WriterNodeVisitor::setControlPointAndNormalsAndUV(const GeometryList& geometryLi
     FbxLayerElementUV* lUVDiffuseLayer = FbxLayerElementUV::Create(mesh, "DiffuseUV");
 	FbxLayerElementVertexColor* lLayerElementVertexColor = FbxLayerElementVertexColor::Create(mesh, "");
 
-	if (vertexcolors)
-	{
-		lLayerElementVertexColor->SetMappingMode(FbxLayerElement::eByControlPoint);
-		lLayerElementVertexColor->SetReferenceMode(FbxLayerElement::eDirect);
-		lLayerElementVertexColor->GetDirectArray().SetCount(index_vert.size());
-		mesh->GetLayer(0)->SetVertexColors(lLayerElementVertexColor);
-	}
-
     if (texcoords)
     {
         lUVDiffuseLayer->SetMappingMode(FbxLayerElement::eByControlPoint);
@@ -480,7 +471,7 @@ WriterNodeVisitor::setControlPointAndNormalsAndUV(const GeometryList& geometryLi
 
     for (MapIndices::iterator it = index_vert.begin(); it != index_vert.end(); ++it)
     {
-       const osg::Geometry* pGeometry = geometryList[it->first.drawableIndex];
+        const osg::Geometry* pGeometry = geometryList[it->first.drawableIndex];
         unsigned int vertexIndex = it->first.vertexIndex;
         unsigned int normalIndex = it->first.normalIndex;
 
@@ -544,34 +535,6 @@ WriterNodeVisitor::setControlPointAndNormalsAndUV(const GeometryList& geometryLi
             lLayerElementNormal->GetDirectArray().SetAt(it->second, normal);
         }
 
-		if (vertexcolors)
-		{
-			const osg::Array * basevertexcolors = pGeometry->getColorArray();
-			if (basevertexcolors && basevertexcolors->getNumElements() > 0)
-			{
-				FbxColor vertexcolor;
-				if (basevertexcolors->getType() == osg::Array::Vec4ArrayType)
-				{
-					const osg::Vec4 & vec = (*static_cast<const osg::Vec4Array *>(basevertexcolors))[vertexIndex];
-					vertexcolor.Set(vec.r(), vec.g(), vec.b(), vec.a());
-				}
-				else if (basevertexcolors->getType() == osg::Array::Vec4dArrayType)
-				{
-					const osg::Vec4d & vec = (*static_cast<const osg::Vec4dArray *>(basevertexcolors))[vertexIndex];
-					vertexcolor.Set(vec.r(), vec.g(), vec.b(), vec.a());
-				}
-				else
-				{
-					OSG_NOTIFY(osg::FATAL) << "Vertex Color array is not Vec4 or Vec4d. Not implemented" << std::endl;
-					throw "Vertex Color array is not Vec4 or Vec4d. Not implemented";
-					//_succeeded = false;
-					//return;
-				}
-
-				lLayerElementVertexColor->GetDirectArray().SetAt(it->second, vertexcolor);
-			}
-		}
-
         if (texcoords)
         {
             const osg::Array * basetexcoords = pGeometry->getTexCoordArray(0);
@@ -605,7 +568,6 @@ WriterNodeVisitor::setControlPointAndNormalsAndUV(const GeometryList& geometryLi
 void WriterNodeVisitor::buildFaces(const std::string& name,
                                    const GeometryList& geometryList,
                                    ListTriangle&     listTriangles,
-	                               bool              vertexcolors,
                                    bool              texcoords)
 {
     MapIndices index_vert;
@@ -638,14 +600,21 @@ void WriterNodeVisitor::buildFaces(const std::string& name,
         addPolygon(mesh, index_vert, it->first, it->second);
         mesh->EndPolygon();
     }
-    setControlPointAndNormalsAndUV(geometryList, index_vert, vertexcolors, texcoords, mesh);
+    setControlPointAndNormalsAndUV(geometryList, index_vert, texcoords, mesh);
+
+	_geometryList.clear();
+	_listTriangles.clear();
+	_texcoords = false;
+	_drawableNum = 0;
+	for (MaterialMap::iterator it = _materialMap.begin(); it != _materialMap.end(); ++it)
+		it->second.setIndex(-1);
+	_lastMaterialIndex = 0;
 }
 
 void WriterNodeVisitor::createListTriangle(const osg::Geometry* geo,
                                            ListTriangle&        listTriangles,
-	                                       bool&                vertexcolors,
                                            bool&                texcoords,
-                                           unsigned int&        drawable_n)
+                                           unsigned int         drawable_n)
 {
     unsigned int nbVertices = 0;
     {
@@ -653,18 +622,6 @@ void WriterNodeVisitor::createListTriangle(const osg::Geometry* geo,
         if (vecs)
         {
             nbVertices = vecs->getNumElements();
-
-			// Vertex colors
-			const osg::Array * vcolvec = geo->getColorArray();
-			if (vcolvec)
-			{
-				unsigned int nb = vcolvec->getNumElements();
-				if (nb == nbVertices) vertexcolors = true;
-				else
-				{
-					OSG_WARN << "There are more/less vertex colors than vertices! Ignoring vertex colors.";
-				}
-			}
 
             // Texture coords
             const osg::Array * texvec = geo->getTexCoordArray(0);
@@ -692,74 +649,45 @@ void WriterNodeVisitor::createListTriangle(const osg::Geometry* geo,
     }
 }
 
-// void WriterNodeVisitor::apply(osg::Geode& node)
-// {
-//     FbxNode* parent = _curFbxNode;
-//     FbxNode* nodeFBX = FbxNode::Create(_pSdkManager, node.getName().empty() ? "DefaultName" : node.getName().c_str());
-//     _curFbxNode->AddChild(nodeFBX);
-//     _curFbxNode = nodeFBX;
-    
-    
-//     unsigned int count = node.getNumDrawables();
-
-//     // collect geometries from geode
-//     GeometryList geometryList;
-//     for (unsigned int i = 0; i < count; ++i)
-//     {
-//        const osg::Geometry* g = node.getDrawable(i)->asGeometry();
-//        if (g)
-//           geometryList.push_back(g);
-//     }
-
-//     if(node.getStateSet()){
-//         pushStateSet(node.getStateSet());
-//     }
-
-//     // process geometries in batch
-//     processGeometryList(geometryList, node.getName());
-
-//     if(node.getStateSet()){
-//         popStateSet(node.getStateSet());
-//     }
-
-//     if (succeedLastApply())
-//         traverse(node);
-
-//     _curFbxNode = parent;
-// }
-
 void WriterNodeVisitor::apply(osg::Geometry& geometry)
 {
-   // here we simply create a single fbx node to assign it the mesh
-   // retrieved from the geometry.
-   // No need to push&pop the geometry state set, as it will be taken into account
-   // by processGeometryList()
+    // retrieved from the geometry.
+    _geometryList.push_back(&geometry);
 
-   // create fbx node to contain the single geometry
-   FbxNode* parent = _curFbxNode;
-   FbxNode* nodeFBX = FbxNode::Create(_pSdkManager, geometry.getName().empty() ? "Geometry" : geometry.getName().c_str());
-   _curFbxNode->AddChild(nodeFBX);
-   _curFbxNode = nodeFBX;
+    pushStateSet(geometry.getStateSet());
+    createListTriangle(&geometry, _listTriangles, _texcoords, _drawableNum++);
+    popStateSet(geometry.getStateSet());
 
-   // process the single geometry
-   GeometryList geometryList;
-   geometryList.push_back(&geometry);
-   processGeometryList(geometryList, geometry.getName());
+    osg::NodeVisitor::traverse(geometry);
 
-   // return to parent fbx node
-   _curFbxNode = parent;
+    if (getNodePath().size() == 1)
+        buildFaces(geometry.getName(), _geometryList, _listTriangles, _texcoords);
+
 }
-
 
 void WriterNodeVisitor::apply(osg::Group& node)
 {
-    FbxNode* parent = _curFbxNode;
+    if (_firstNodeProcessed)
+    {
+        FbxNode* parent = _curFbxNode;
 
-    FbxNode* nodeFBX = FbxNode::Create(_pSdkManager, node.getName().empty() ? "DefaultName" : node.getName().c_str());
-    _curFbxNode->AddChild(nodeFBX);
-    _curFbxNode = nodeFBX;
-    traverse(node);
-    _curFbxNode = parent;
+        FbxNode* nodeFBX = FbxNode::Create(_pSdkManager, node.getName().empty() ? "DefaultName" : node.getName().c_str());
+        _curFbxNode->AddChild(nodeFBX);
+        _curFbxNode = nodeFBX;
+
+        traverse(node);
+
+        if (_listTriangles.size() > 0)
+            buildFaces(node.getName(), _geometryList, _listTriangles, _texcoords);
+
+        _curFbxNode = parent;
+    }
+    else
+    {
+        //ignore the root node to maintain same hierarchy
+        _firstNodeProcessed = true;
+        traverse(node);
+    }
 }
 
 void WriterNodeVisitor::apply(osg::MatrixTransform& node)
@@ -788,64 +716,35 @@ void WriterNodeVisitor::apply(osg::MatrixTransform& node)
     _curFbxNode = parent;
 }
 
-//////////////////////////////////////////////////////////////////////////
-void WriterNodeVisitor::processGeometryList(GeometryList &geometryList, const std::string& meshName)
-{
-   ListTriangle listTriangles;
-   bool vertexcolors = false;
-   bool texcoords = false;
-   for (MaterialMap::iterator it = _materialMap.begin(); it != _materialMap.end(); ++it)
-      it->second.setIndex(-1);
-
-   _lastMaterialIndex = 0;
-
-
-   for (unsigned int i = 0; i < geometryList.size(); ++i)
-   {
-      const osg::Geometry* g = geometryList[i];
-
-      if (g != NULL)
-      {
-         pushStateSet(g->getStateSet());
-         createListTriangle(g, listTriangles, vertexcolors, texcoords, i);
-         popStateSet(g->getStateSet());
-      }
-   }
-
-   if (listTriangles.size() > 0){
-      buildFaces(meshName, geometryList, listTriangles, vertexcolors, texcoords);
-   }
-}
-
 void WriterNodeVisitor::apply(osg::PositionAttitudeTransform& node)
 {
-	FbxNode* parent = _curFbxNode;
-	_curFbxNode = FbxNode::Create(_pSdkManager, node.getName().empty() ? "DefaultName" : node.getName().c_str());
-	parent->AddChild(_curFbxNode);
+    FbxNode* parent = _curFbxNode;
+    _curFbxNode = FbxNode::Create(_pSdkManager, node.getName().empty() ? "DefaultName" : node.getName().c_str());
+    parent->AddChild(_curFbxNode);
 
-	osg::Vec3d scale = node.getScale();
-	osg::Quat quat = node.getAttitude();
-	osg::Vec3d pos = node.getPosition();
+    osg::Vec3 pos = node.getPosition();
+    osg::Vec3 scl = node.getScale();
+    osg::Quat rot = node.getAttitude();
 
-	//const osg::Matrix& matrix = node.getMatrix();
-	//osg::Vec3d pos, scl;
-	//osg::Quat rot, so;
+    _curFbxNode->LclTranslation.Set(FbxDouble3(pos.x(), pos.y(), pos.z()));
+    _curFbxNode->LclScaling.Set(FbxDouble3(scl.x(), scl.y(), scl.z()));
 
-	//matrix.decompose(pos, rot, scl, so);
-	_curFbxNode->LclTranslation.Set(FbxDouble3(pos.x(), pos.y(), pos.z()));
-	_curFbxNode->LclScaling.Set(FbxDouble3(scale.x(), scale.y(), scale.z()));
+    FbxAMatrix mat;
 
-	FbxAMatrix mat;
+    FbxQuaternion q(rot.x(), rot.y(), rot.z(), rot.w());
+    mat.SetQ(q);
+    FbxVector4 vec4 = mat.GetR();
 
-	FbxQuaternion q(quat.x(), quat.y(), quat.z(), quat.w());
-	mat.SetQ(q);
-	FbxVector4 vec4 = mat.GetR();
+    _curFbxNode->LclRotation.Set(FbxDouble3(vec4[0], vec4[1], vec4[2]));
 
-	_curFbxNode->LclRotation.Set(FbxDouble3(vec4[0], vec4[1], vec4[2]));
+    traverse(node);
 
-	traverse(node);
-	_curFbxNode = parent;
+    if (_listTriangles.size() > 0)
+        buildFaces(node.getName(), _geometryList, _listTriangles, _texcoords);
+
+    _curFbxNode = parent;
 }
+
 
 // end namespace pluginfbx
 }

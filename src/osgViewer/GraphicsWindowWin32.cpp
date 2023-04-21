@@ -688,6 +688,16 @@ class Win32KeyboardMap
 static Win32KeyboardMap s_win32KeyboardMap;
 static int remapWin32Key(int key)
 {
+    bool numlockIsActive = static_cast<bool>(GetKeyState(VK_NUMLOCK) & 0x1);
+    if (numlockIsActive)
+    {
+        if (key >= VK_NUMPAD0 && key <= VK_NUMPAD9)
+            return key - VK_NUMPAD0 + osgGA::GUIEventAdapter::KEY_KP_0;
+
+        if (key == VK_DECIMAL)
+            return osgGA::GUIEventAdapter::KEY_KP_Decimal;
+    }
+
     return s_win32KeyboardMap.remapKey(key);
 }
 
@@ -1091,7 +1101,7 @@ bool Win32WindowingSystem::changeScreenSettings( const osg::GraphicsContext::Scr
     // Start by testing if the change would be successful (without applying it)
     //
 
-    unsigned int result = ::ChangeDisplaySettingsEx(displayDevice.DeviceName, &deviceMode, NULL, CDS_TEST, NULL);
+    LONG result = ::ChangeDisplaySettingsEx(displayDevice.DeviceName, &deviceMode, NULL, CDS_TEST, NULL);
     if (result==DISP_CHANGE_SUCCESSFUL)
     {
         result = ::ChangeDisplaySettingsEx(displayDevice.DeviceName, &deviceMode, NULL, 0, NULL);

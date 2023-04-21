@@ -174,7 +174,7 @@ void osgParticle::ParticleSystem::update(double dt, osg::NodeVisitor& nv)
         osgUtil::CullVisitor* cv = nv.asCullVisitor();
         if (cv)
         {
-            osg::Matrixd modelview = *(cv->getModelViewMatrix());
+            osg::Matrix modelview = *(cv->getModelViewMatrix());
             double scale = (_sortMode==SORT_FRONT_TO_BACK ? -1.0 : 1.0);
             double deadDistance = DBL_MAX;
             for (unsigned int i=0; i<_particles.size(); ++i)
@@ -343,16 +343,16 @@ void osgParticle::ParticleSystem::drawImplementation(osg::RenderInfo& renderInfo
 
                     if (_alignment==BILLBOARD)
                     {
-                        xAxis = osg::Matrix::transform3x3(R,scaled_aligned_xAxis);
+                        xAxis = osg::Matrix::transform3x3(scaled_aligned_xAxis, R);
                         xAxis = osg::Matrix::transform3x3(modelview,xAxis);
 
-                        yAxis = osg::Matrix::transform3x3(R,scaled_aligned_yAxis);
+                        yAxis = osg::Matrix::transform3x3(scaled_aligned_yAxis, R);
                         yAxis = osg::Matrix::transform3x3(modelview,yAxis);
                     }
                     else
                     {
-                        xAxis = osg::Matrix::transform3x3(R, scaled_aligned_xAxis);
-                        yAxis = osg::Matrix::transform3x3(R, scaled_aligned_yAxis);
+                        xAxis = osg::Matrix::transform3x3(scaled_aligned_xAxis, R);
+                        yAxis = osg::Matrix::transform3x3(scaled_aligned_yAxis, R);
                     }
                 }
 
@@ -411,7 +411,7 @@ void osgParticle::ParticleSystem::drawImplementation(osg::RenderInfo& renderInfo
                         texcoords.push_back(t1);
                         texcoords.push_back(t2);
 
-#if !defined(OSG_GLES2_AVAILABLE)
+#if defined(OSG_GL1_AVAILABLE) || defined(OSG_GL2_AVAILABLE) || defined(OSG_GLES1_AVAILABLE)
                         const unsigned int count = 4;
                         const GLenum mode = GL_QUADS;
 
@@ -419,7 +419,7 @@ void osgParticle::ParticleSystem::drawImplementation(osg::RenderInfo& renderInfo
                         vertices.push_back(c3);
                         texcoords.push_back(t3);
 #else
-                        // No GL_QUADS mode on GLES2 and upper
+                        // No GL_QUADS mode on OpenGL 3 and upper / GLES2 and upper
                         const unsigned int count = 6;
                         const GLenum mode = GL_TRIANGLES;
 
@@ -659,6 +659,8 @@ osg::BoundingBox osgParticle::ParticleSystem::computeBoundingBox() const
 
 void osgParticle::ParticleSystem::resizeGLObjectBuffers(unsigned int maxSize)
 {
+    Drawable::resizeGLObjectBuffers(maxSize);
+
     _bufferedArrayData.resize(maxSize);
     for(unsigned int i=0; i<_bufferedArrayData.size(); ++i)
     {
@@ -668,6 +670,8 @@ void osgParticle::ParticleSystem::resizeGLObjectBuffers(unsigned int maxSize)
 
 void osgParticle::ParticleSystem::releaseGLObjects(osg::State* state) const
 {
+    Drawable::releaseGLObjects(state);
+
     if (state)
     {
         _bufferedArrayData[state->getContextID()].releaseGLObjects(state);
@@ -681,7 +685,7 @@ void osgParticle::ParticleSystem::releaseGLObjects(osg::State* state) const
     }
 }
 
-osg::VertexArrayState* osgParticle::ParticleSystem::createVertexArrayStateImplemenation(osg::RenderInfo& renderInfo) const
+osg::VertexArrayState* osgParticle::ParticleSystem::createVertexArrayStateImplementation(osg::RenderInfo& renderInfo) const
 {
     osg::State& state = *renderInfo.getState();
 
