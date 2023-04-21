@@ -201,6 +201,7 @@ class WriterNodeVisitor: public osg::NodeVisitor
         void buildFaces(const std::string& name,
                         const GeometryList& geometryList,
                         ListTriangle&       listTriangles,
+                        bool                vertexColors,
                         bool                texcoords);
 
         /// Set the layer for texture and Material in layer 0.
@@ -209,6 +210,7 @@ class WriterNodeVisitor: public osg::NodeVisitor
         /// Set Vertices, normals, and UVs
         void setControlPointAndNormalsAndUV(const GeometryList& geometryList,
                                             MapIndices&       index_vert,
+                                            bool              vertexColors,
                                             bool              texcoords,
                                             FbxMesh*         fbxMesh);
 
@@ -221,6 +223,7 @@ class WriterNodeVisitor: public osg::NodeVisitor
         */
         void createListTriangle(const osg::Geometry* geo,
                                 ListTriangle&        listTriangles,
+                                bool&                vertexColors,
                                 bool&                texcoords,
                                 unsigned int         drawable_n);
 
