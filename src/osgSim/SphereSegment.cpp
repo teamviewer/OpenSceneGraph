@@ -93,6 +93,32 @@ void SphereSegment::traverse(osg::NodeVisitor& nv)
     }
 }
 
+void SphereSegment::resizeGLObjectBuffers(unsigned int maxSize)
+{
+    if (_surfaceGeometry.valid()) _surfaceGeometry->resizeGLObjectBuffers(maxSize);
+    if (_spokesGeometry.valid()) _spokesGeometry->resizeGLObjectBuffers(maxSize);
+    if (_edgeLineGeometry.valid())  _edgeLineGeometry->resizeGLObjectBuffers(maxSize);
+    if (_sidesGeometry.valid()) _sidesGeometry->resizeGLObjectBuffers(maxSize);
+
+    if (_litOpaqueState.valid())  _litOpaqueState->resizeGLObjectBuffers(maxSize);
+    if (_unlitOpaqueState.valid())  _unlitOpaqueState->resizeGLObjectBuffers(maxSize);
+    if (_litTransparentState.valid())  _litTransparentState->resizeGLObjectBuffers(maxSize);
+    if (_unlitTransparentState.valid()) _unlitTransparentState->resizeGLObjectBuffers(maxSize);
+}
+
+void SphereSegment::releaseGLObjects(osg::State* state) const
+{
+    if (_surfaceGeometry.valid()) _surfaceGeometry->releaseGLObjects(state);
+    if (_spokesGeometry.valid()) _spokesGeometry->releaseGLObjects(state);
+    if (_edgeLineGeometry.valid())  _edgeLineGeometry->releaseGLObjects(state);
+    if (_sidesGeometry.valid()) _sidesGeometry->releaseGLObjects(state);
+
+    if (_litOpaqueState.valid())  _litOpaqueState->releaseGLObjects(state);
+    if (_unlitOpaqueState.valid())  _unlitOpaqueState->releaseGLObjects(state);
+    if (_litTransparentState.valid())  _litTransparentState->releaseGLObjects(state);
+    if (_unlitTransparentState.valid()) _unlitTransparentState->releaseGLObjects(state);
+}
+
 osg::BoundingSphere SphereSegment::computeBound() const
 {
     _bbox.init();
@@ -2465,7 +2491,7 @@ void SphereSegment::updatePrimitives()
     {
         unsigned int rowSize = _density+1;
 
-        // add primitve set
+        // add primitive set
         osg::ref_ptr<osg::DrawElementsUShort> elements = new osg::DrawElementsUShort(GL_TRIANGLES);
         elements->reserve(2*rowSize*rowSize);
         _surfaceGeometry->getPrimitiveSetList().clear();
@@ -2531,7 +2557,7 @@ void SphereSegment::updatePrimitives()
     {
         unsigned int rowSize = _density+1;
 
-        // add primitve set
+        // add primitive set
         osg::ref_ptr<osg::DrawElementsUShort> elements = new osg::DrawElementsUShort(GL_LINES);
         elements->reserve(8);
         _spokesGeometry->getPrimitiveSetList().clear();
@@ -2555,7 +2581,7 @@ void SphereSegment::updatePrimitives()
     {
         unsigned int rowSize = _density+1;
 
-        // add primitve set
+        // add primitive set
         osg::ref_ptr<osg::DrawElementsUShort> elements = new osg::DrawElementsUShort(GL_LINE_STRIP);
         elements->reserve((rowSize-1)*4+1);
         _edgeLineGeometry->getPrimitiveSetList().clear();
@@ -2592,7 +2618,7 @@ void SphereSegment::updatePrimitives()
     {
         unsigned int rowSize = _density+1;
 
-        // add primitve set
+        // add primitive set
         osg::ref_ptr<osg::DrawElementsUShort> elements = new osg::DrawElementsUShort(GL_TRIANGLE_FAN);
         elements->reserve((rowSize-1)*4+2);
         _sidesGeometry->getPrimitiveSetList().clear();

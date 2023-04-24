@@ -233,7 +233,7 @@ void Texture2D::apply(State& state) const
 
         textureObject->setAllocated(_numMipmapLevels,_internalFormat,_textureWidth,_textureHeight,1,_borderWidth);
 
-        // in theory the following line is redundent, but in practice
+        // in theory the following line is redundant, but in practice
         // have found that the first frame drawn doesn't apply the textures
         // unless a second bind is called?!!
         // perhaps it is the first glBind which is not required...
@@ -288,7 +288,7 @@ void Texture2D::apply(State& state) const
             non_const_this->_image = NULL;
         }
 
-        // in theory the following line is redundent, but in practice
+        // in theory the following line is redundant, but in practice
         // have found that the first frame drawn doesn't apply the textures
         // unless a second bind is called?!!
         // perhaps it is the first glBind which is not required...
@@ -306,8 +306,11 @@ void Texture2D::apply(State& state) const
              textureObject = generateAndAssignTextureObject(contextID, GL_TEXTURE_2D, _numMipmapLevels, texStorageSizedInternalFormat, _textureWidth, _textureHeight, 1, _borderWidth);
              textureObject->bind();
              applyTexParameters(GL_TEXTURE_2D, state);
-             extensions->glTexStorage2D( GL_TEXTURE_2D, osg::maximum(_numMipmapLevels,1), texStorageSizedInternalFormat,
-                      _textureWidth, _textureHeight);
+             if(!textureObject->_allocated)
+             {
+                 extensions->glTexStorage2D( GL_TEXTURE_2D, osg::maximum(_numMipmapLevels,1), texStorageSizedInternalFormat,
+                          _textureWidth, _textureHeight);
+             }
          }
          else
          {
@@ -327,6 +330,7 @@ void Texture2D::apply(State& state) const
             _readPBuffer->bindPBufferToTexture(GL_FRONT);
         }
 
+        textureObject->setAllocated(_numMipmapLevels, texStorageSizedInternalFormat!=0? texStorageSizedInternalFormat: _internalFormat, _textureWidth, _textureHeight, 1, _borderWidth);
     }
     else
     {

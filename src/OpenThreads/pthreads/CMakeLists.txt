@@ -80,8 +80,15 @@ ELSE()
           # double check that pthread_setaffinity_np is available as FreeBSD header doesn't contain required function
           CHECK_CXX_SOURCE_COMPILES("
             #include <pthread.h>
+            #ifdef __FreeBSD__
+            #include <pthread_np.h>
+            #endif
             int main() {
+            #ifdef __FreeBSD__
+            cpuset_t cpumask;
+            #else
             cpu_set_t cpumask;
+            #endif
             CPU_ZERO( &cpumask );
             CPU_SET( 0, &cpumask );
             pthread_setaffinity_np( pthread_self(), sizeof(cpumask), &cpumask);
@@ -130,7 +137,7 @@ ELSE()
     ENDIF()
 
     IF(APPLE)
-        IF(OSG_BUILD_PLATFORM_IPHONE OR OSG_BUILD_PLATFORM_IPHONE_SIMULATOR)
+        IF(OSG_BUILD_PLATFORM_IPHONE)
             SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES XCODE_ATTRIBUTE_ENABLE_BITCODE ${IPHONE_ENABLE_BITCODE})
         ENDIF()
     ENDIF()
